@@ -83,11 +83,11 @@
                 // Usar la API de GitHub para subir el archivo
                 try {
                     const response = await fetch(
-                        `https://api.github.com/repos/<tu-usuario>/registro-evidencias/contents/${ruta}`,
+                        `https://api.github.com/repos/jenerCruz/Eidencias/contents/${ruta}`,
                         {
                             method: 'PUT',
                             headers: {
-                                'Authorization': 'token <tu-github-token>',
+                                'Authorization': 'token <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>
                                 'Accept': 'application/vnd.github.v3+json',
                             },
                             body: JSON.stringify({
