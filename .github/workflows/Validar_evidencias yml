@@ -1,0 +1,24 @@
+name: Validar Evidencia Subida
+
+on:
+  push:
+    paths:
+      - 'evidencias/**'
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar archivo
+        run: |
+          ARCHIVO_CAMBIADO=$(git diff --name-only HEAD^ HEAD | head -n 1)
+          echo "Nuevo archivo subido: $ARCHIVO_CAMBIADO"
+          if [[ "$ARCHIVO_CAMBIADO" =~ evidencias/(Act25086|Act12505|Act651333)/(entradas|salidas)/.* ]]; then
+            echo "✅ Archivo válido y en la carpeta correcta."
+          else
+            echo "❌ Archivo en ubicación no permitida."
+            exit 1
+          fi
