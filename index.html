@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Evidencia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        #mensaje {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .exito {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Subir Evidencia</h1>
+    <form id="formulario">
+        <label for="invertido">Selecciona el Invertido:</label>
+        <select id="invertido" required>
+            <option value="">-- Selecciona --</option>
+            <option value="Act25086">Act25086</option>
+            <option value="Act12505">Act12505</option>
+            <option value="Act651333">Act651333</option>
+        </select>
+
+        <label for="tipo">Tipo de Evidencia:</label>
+        <select id="tipo" required>
+            <option value="">-- Selecciona --</option>
+            <option value="entradas">Entrada</option>
+            <option value="salidas">Salida</option>
+        </select>
+
+        <label for="archivo">Selecciona el Archivo:</label>
+        <input type="file" id="archivo" required>
+
+        <button type="submit">Subir Evidencia</button>
+    </form>
+    <div id="mensaje"></div>
+
+    <script>
+        document.getElementById('formulario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const invertido = document.getElementById('invertido').value;
+            const tipo = document.getElementById('tipo').value;
+            const archivoInput = document.getElementById('archivo');
+            const mensaje = document.getElementById('mensaje');
+            mensaje.textContent = '';
+            mensaje.className = '';
+
+            if (!invertido || !tipo || !archivoInput.files[0]) {
+                mensaje.textContent = 'Por favor, completa todos los campos.';
+                mensaje.className = 'error';
+                return;
+            }
+
+            const archivo = archivoInput.files[0];
+            const ruta = `evidencias/${invertido}/${tipo}/${Date.now()}_${archivo.name}`;
+
+            // Leer el archivo como base64
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const contenido = event.target.result.split(',')[1];
+
+                // Usar la API de GitHub para subir el archivo
+                try {
+                    const response = await fetch(
+                        `https://api.github.com/repos/<tu-usuario>/registro-evidencias/contents/${ruta}`,
+                        {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': 'token <tu-github-token>',
+                                'Accept': 'application/vnd.github.v3+json',
+                            },
+                            body: JSON.stringify({
+                                message: `Subir evidencia para ${invertido} (${tipo})`,
+                                content: contenido,
+                            }),
+                        }
+                    );
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        mensaje.textContent = `✅ Evidencia subida con éxito: ${ruta}`;
+                        mensaje.className = 'exito';
+                    } else {
+                        mensaje.textContent = `❌ Error: ${data.message}`;
+                        mensaje.className = 'error';
+                    }
+                } catch (error) {
+                    mensaje.textContent = `❌ Error al subir el archivo: ${error.message}`;
+                    mensaje.className = 'error';
+                }
+            };
+            reader.readAsDataURL(archivo);
+        });
+    </script>
+</body>
+</html>
