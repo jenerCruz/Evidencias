@@ -1,0 +1,7 @@
+- name: Usar la API de GitHub
+  run: |
+    curl -X POST \
+      -H "Authorization: token ${{ secrets.API_TOKEN }}" \
+      -H "Accept: application/vnd.github.v3+json" \
+      https://api.github.com/repos/jenerCruz/Evidencias/dispatches \
+      -d '{"event_type":"mi_evento"}'
