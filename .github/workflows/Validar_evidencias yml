@@ -4,21 +4,43 @@ on:
   push:
     paths:
       - 'evidencias/**'
+      - 'ids.json'
 
 jobs:
   validar:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout del repositorio
         uses: actions/checkout@v4
 
-      - name: Verificar archivo
+      - name: Leer IDs válidos desde ids.json
+        id: ids
         run: |
-          ARCHIVO_CAMBIADO=$(git diff --name-only HEAD^ HEAD | head -n 1)
-          echo "Nuevo archivo subido: $ARCHIVO_CAMBIADO"
-          if [[ "$ARCHIVO_CAMBIADO" =~ evidencias/(Act25086|Act12505|Act651333)/(entradas|salidas)/.* ]]; then
-            echo "✅ Archivo válido y en la carpeta correcta."
-          else
-            echo "❌ Archivo en ubicación no permitida."
+          echo "📄 Cargando IDs válidos desde ids.json..."
+          IDS_VALIDOS=$(jq -r '.ids[]' ids.json | paste -sd "|" -)
+          echo "IDS_VALIDOS=$IDS_VALIDOS" >> $GITHUB_ENV
+
+      - name: Validar ubicación de archivos subidos
+        run: |
+          echo "🔍 Archivos modificados en este push:"
+          ARCHIVOS_CAMBIADOS=$(git diff --name-only HEAD^ HEAD)
+          echo "$ARCHIVOS_CAMBIADOS"
+
+          ERROR=0
+
+          for ARCHIVO in $ARCHIVOS_CAMBIADOS; do
+            echo "📁 Verificando: $ARCHIVO"
+            if [[ "$ARCHIVO" =~ ^evidencias/($IDS_VALIDOS)/(entradas|salidas)/.+$ ]]; then
+              echo "✅ Archivo válido: $ARCHIVO"
+            else
+              echo "❌ Archivo inválido o fuera de ubicación permitida: $ARCHIVO"
+              ERROR=1
+            fi
+          done
+
+          if [ $ERROR -eq 1 ]; then
+            echo "🚫 Validación fallida. Al menos un archivo no cumple con las reglas."
             exit 1
+          else
+            echo "🎉 Todos los archivos están en ubicaciones válidas."
           fi
